@@ -1,10 +1,10 @@
 import styled from "styled-components";
 import { GlobalStyle } from "./GlobalStyle";
 
-import { useEffect, useState } from "react";
+import Rules from "./components/Rules";
+import InputPassword from "./components/InputPassword";
 
-import X from './assets/icons/x.png';
-import Y from './assets/icons/y.png';
+import { useEffect, useState } from "react";
 
 const App = () => {
 
@@ -32,67 +32,106 @@ const App = () => {
       rule: "Digits must add up to 25",
       pass: false,
     },
+    {
+      id: 5,
+      rule: "Must contain one german car brand",
+      pass: false,
+    },
   ])
 
-  const containsDigit = (variable) => {
+  //German Car Brands
+  const [germanCarBrands, setGermanCarBrands] = useState([
+    "Volkswagen",
+    "BMW",
+    "Mercedes",
+    "Audi",
+    "Porsche",
+    "Opel",
+    "Audi",
+    "Vauxhall",
+    "Mini",
+    "Bentley",
+    "Smart",
+    "Skoda"
+  ]);
+
+  //Functions meant for checking if the password fulfils certain requirements
+  const containsDigit = (x) => {
     const regex = /\d/;
-    return regex.test(variable);
+    return regex.test(x);
+  }
+
+  const containsCapitalLetter = (x) => {
+    const capitals = /[A-Z]/;
+    return capitals.test(x);
+  }
+
+  const checkDigitSum = (x) => {
+    // Regular expression to match all digits in the input string
+    const digitRegex = /\d/g;
+
+    // Use the match() method to find all matches of digits in the value
+    const digitsArray = x.match(digitRegex);
+
+    // Check if there are any digits found
+    if (digitsArray) {
+      // Convert each element in the digitsArray to a number and calculate the sum
+      const sum = digitsArray.reduce((acc, digit) => acc + parseInt(digit), 0);
+      return sum;
+    } else {
+      // If no digits are found, return 0
+      return 0;
+    }
+  }
+
+  const includesGermanCarBrand = (x) => {
+    // Convert the value to lowercase for a case-insensitive check
+    const lowercasedValue = x.toLowerCase();
+
+    // Loop through each word in the wordArray
+    for (const word of germanCarBrands) {
+      // Convert the current word to lowercase for a case-insensitive comparison
+      const lowercasedWord = word.toLowerCase();
+
+      // Check if the lowercased value contains the lowercased word
+      if (lowercasedValue.includes(lowercasedWord)) {
+        return true; // If a match is found, return true
+      }
+    }
+
+    return false; // If no match is found, return false
   }
 
   const updateRules = (index) => {
-    rules.map((rule, idx) => {
-      if (idx === index) {
-        rule.pass = true;
-      }
-    })
-  }
+    setRules((prevRules) => {
+      return prevRules.map((rule, idx) => {
+        if (idx === index) {
+          return { ...rule, pass: true };
+        }
+        return rule;
+      });
+    });
+  };
 
-  useEffect (() => {
-    if(pass.length > 0) setRulesActive(true);
-    if(pass.length > 5) updateRules(0);
-    if(containsDigit(pass)) updateRules(1);
+  useEffect(() => {
+    if (pass.length > 0) setRulesActive(true);
+    if (pass.length > 5) updateRules(0);
+    if (containsDigit(pass)) updateRules(1);
+    if (containsCapitalLetter(pass)) updateRules(2);
+    if (checkDigitSum(pass) === 25) updateRules(3);
+    if (includesGermanCarBrand(pass)) updateRules(4);
   }, [pass])
 
   return (
     <Container>
       <GlobalStyle />
-      <Password
-        type="text"
-        onChange={(e) => setPass(e.currentTarget.value)}
+      <InputPassword 
+        setPass={setPass}
       />
-
-      <RulesContainer>
-        {
-          rulesActive &&
-          rules.map((rule, idx) => {
-            if (idx === 0) {
-              return (
-                <Rule key={rule.id}>
-                  <RuleIcon src={rule.pass ? Y : X} />
-                  <RuleNumber>
-                    {rule.id}
-                  </RuleNumber>
-                  <RuleDesc>
-                    {rule.rule}
-                  </RuleDesc>
-                </Rule>
-              );
-            }
-            return (
-              rules[idx - 1].pass &&
-              <Rule key={rule.id}>
-                <RuleIcon src={rule.pass ? Y : X} />
-                <RuleNumber>
-                  {rule.id}
-                </RuleNumber>
-                <RuleDesc>
-                  {rule.rule}
-                </RuleDesc>
-              </Rule>
-            );
-          })
-        }
-      </RulesContainer>
+      <Rules
+        rules={rules}
+        rulesActive={rulesActive}
+      />
     </Container>
   );
 };
@@ -106,58 +145,4 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-`;
-
-const Password = styled.input`
-  width: 35vw;
-  padding: 20px;
-  border: 1px solid #fff;
-  border-radius: 15px;
-  color: #fff;
-  font-size: 24px;
-  font-weight: 500;
-  font-family: monospace;
-  background-color: transparent;
-`;
-
-const RulesContainer = styled.div`
-  margin-top: 60px;
-  display: flex;
-  flex-direction: column-reverse;
-`;
-
-const Rule = styled.div`
-  padding: 25px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #ddd;
-  color: #000;
-  margin-bottom: 30px;
-
-  animation: fadeIn .4s ease 1;
-
-  @keyframes fadeIn {
-    from {
-      transform: translateY(-25px);
-      opacity: .1;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-`;
-
-const RuleIcon = styled.img`
-  width: 25px;
-`;
-
-const RuleNumber = styled.div`
-  font-size: 18px;
-`;
-
-const RuleDesc = styled.div`
-  font-size: 24px;
 `;
